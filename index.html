@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tutorías en línea</title>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--ink:#14202e;--mute:#5b6878;--line:#d5dce5;--brand:#12355b;--bi:#fff;--gold:#e8b020;--ok:#1b7a57;--lock:#e9edf2}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1621;--card:#16212f;--ink:#e8edf3;--mute:#9aa8b8;--line:#2a3a4d;--brand:#7fb0e6;--bi:#0e1621;--gold:#f0c040;--ok:#4fc79a;--lock:#1b2838}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:640px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:1.5rem;margin:0}h2{font-size:1.15rem;margin:0 0 8px}
+p{margin:0 0 10px}.sub,.note{color:var(--mute)}.note{font-size:.9rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.seg{display:flex;background:var(--lock);border-radius:12px;padding:4px;margin-bottom:14px}
+.seg button{flex:1;border:0;background:none;color:var(--mute);font:600 15px inherit;padding:10px;border-radius:9px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink)}
+label{display:block;font-weight:600;margin:10px 0 4px}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px}
+.main{background:var(--brand);color:var(--bi);border:0;border-radius:10px;padding:12px;font:600 16px inherit;cursor:pointer;width:100%;margin-top:14px}
+.main:disabled{opacity:.4}
+.ghost{background:none;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 12px;cursor:pointer;font:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.err{color:#c0392b;font-size:.9rem;min-height:1.3em;margin-top:6px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.blk{border:1.5px solid var(--brand);background:var(--card);color:var(--ink);border-radius:12px;padding:12px;text-align:left;cursor:pointer;font:inherit;min-height:80px}
+.blk b{display:block}.blk span{font-size:.88rem;color:var(--mute)}
+.blk:disabled{border-style:dashed;border-color:var(--line);background:var(--lock);cursor:not-allowed}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:9px 14px;font:600 15px inherit;cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--brand);background:var(--brand);color:var(--bi)}
+.mail{border-left:4px solid var(--gold);background:var(--bg);border-radius:8px;padding:10px 12px;margin-top:10px;font-size:.95rem;word-break:break-word}
+.ok{border-color:var(--ok)}
+[hidden]{display:none!important}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+</head>
+<body>
+<main>
+<div id="warn" class="card" hidden><b>Falta configurar.</b> Pega tus claves de Firebase y EmailJS en la sección CONFIG del código.</div>
+
+<section id="vAuth">
+<h1>Tutorías en línea</h1>
+<p class="sub">Entra o crea tu cuenta para agendar o recibir tutorías.</p>
+<div class="seg"><button id="tIn" aria-pressed="true">Entrar</button><button id="tUp" aria-pressed="false">Crear cuenta</button></div>
+<div class="card">
+<div id="fUp" hidden>
+<label for="rol">Soy</label>
+<select id="rol"><option value="alumno">Alumno</option><option value="tutor">Tutor</option></select>
+<label for="nom">Nombre completo</label>
+<input id="nom" autocomplete="name">
+<p class="note" id="nAl">Alumnos: usa solo tu nombre, nunca tu matrícula.</p>
+</div>
+<label for="em">Correo para iniciar sesión</label>
+<input id="em" type="email" autocomplete="email">
+<label for="pw">Contraseña (mínimo 6 caracteres)</label>
+<input id="pw" type="password" autocomplete="current-password">
+<div id="fTu" hidden>
+<label for="cc">Correo donde recibirás las tutorías</label>
+<input id="cc" type="email" placeholder="Si lo dejas vacío, usa el de inicio de sesión">
+<label for="pl">Plataforma de tus sesiones</label>
+<select id="pl"><option>Google Meet</option><option>Zoom</option><option>Microsoft Teams</option><option>Otra</option></select>
+<label for="en">Tu enlace de reunión (sala fija)</label>
+<input id="en" type="url" placeholder="https://meet.google.com/...">
+</div>
+<div class="err" id="err" role="alert"></div>
+<button class="main" id="go">Entrar</button>
+</div>
+</section>
+
+<section id="vApp" hidden>
+<div class="top"><h1 id="hola"></h1><button class="ghost" id="out">Salir</button></div>
+
+<div id="vAl" hidden>
+<div class="card">
+<h2>Tu tutor</h2>
+<label for="tb">Escribe el nombre de tu tutor</label>
+<input id="tb" list="tl" autocomplete="off">
+<datalist id="tl"></datalist>
+<div class="err" id="e3" role="alert"></div>
+<button class="main" id="bt">Buscar tutor</button>
+</div>
+<div class="card" id="cb" hidden><h2 id="tn"></h2><p class="note">Las tutorías bloqueadas se abren 14 días antes de su fecha.</p><div class="grid" id="blocks"></div></div>
+<div class="card" id="panel" hidden></div>
+<div class="card ok" id="done" hidden></div>
+</div>
+
+<div id="vTu" hidden>
+<div class="card"><h2>Tus datos</h2><div id="tdat"></div></div>
+<div class="card"><h2>Tutorías programadas</h2><div id="lista"><p class="note">Cargando...</p></div></div>
+</div>
+</section>
+</main>
+
+<script type="module">
+/* ============ CONFIG: pega aquí tus claves ============ */
+const firebaseConfig={apiKey:"AIzaSyAua0jO9zYxOLJxwMS0NLI8NEElqeE44Lk",authDomain:"tutorias-uv-c66ef.firebaseapp.com",projectId:"tutorias-uv-c66ef",appId:"1:521654692973:web:26a30adfca0f1d89316364"};
+const EMAILJS={publicKey:"PEGA_AQUI",serviceId:"PEGA_AQUI",templateId:"PEGA_AQUI"};
+/* Fechas de las tutorías (año-mes-día). Edítalas como quieras. */
+const TUT=[["2026-10-14"],["2026-11-04"],["2026-11-18"],["2026-12-02"],["2026-12-16"],["2027-01-13"]];
+/* ======================================================= */
+let initializeApp,getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,onAuthStateChanged,signOut,getFirestore,doc,setDoc,getDoc,collection,query,where,getDocs,addDoc,serverTimestamp;
+async function loadFB(){
+const V="https://www.gstatic.com/firebasejs/10.12.2/";
+const a=await import(V+"firebase-app.js"),b=await import(V+"firebase-auth.js"),c=await import(V+"firebase-firestore.js");
+({initializeApp}=a);
+({getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,onAuthStateChanged,signOut}=b);
+({getFirestore,doc,setDoc,getDoc,collection,query,where,getDocs,addDoc,serverTimestamp}=c)}
+
+const $=i=>document.getElementById(i);
+const esc=t=>{const d=document.createElement("div");d.textContent=t==null?"":t;return d.innerHTML};
+const norm=s=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g," ").trim();
+const fmt=iso=>new Date(iso+"T00:00:00").toLocaleDateString("es-MX",{day:"numeric",month:"long"});
+const bad=firebaseConfig.apiKey.startsWith("PEGA");
+if(bad)$("warn").hidden=false;
+let app,auth,db,uid,P,mode="in",busy=false,tutores=[],S={};
+
+
+function setMode(m){mode=m;$("tIn").setAttribute("aria-pressed",m==="in");$("tUp").setAttribute("aria-pressed",m==="up");
+$("fUp").hidden=m==="in";$("go").textContent=m==="in"?"Entrar":"Crear cuenta";rolUI();$("err").textContent=""}
+function rolUI(){const t=mode==="up"&&$("rol").value==="tutor";$("fTu").hidden=!t;$("nAl").hidden=t}
+$("tIn").onclick=()=>setMode("in");$("tUp").onclick=()=>setMode("up");$("rol").onchange=rolUI;
+
+function msg(e){const c=e.code||"";
+if(c.includes("email-already"))return"Ese correo ya tiene cuenta. Usa Entrar.";
+if(c.includes("weak"))return"La contraseña debe tener al menos 6 caracteres.";
+if(c.includes("invalid-email"))return"El correo no es válido.";
+if(c.includes("invalid-credential")||c.includes("wrong")||c.includes("user-not"))return"Correo o contraseña incorrectos.";
+return"No se pudo completar ("+(c||e.message)+"). Revisa la configuración."}
+
+$("go").onclick=async()=>{
+const er=$("err");er.textContent="";
+if(bad){er.textContent="Faltan las claves de Firebase en el código (los PEGA_AQUI).";return}
+const em=$("em").value.trim(),pw=$("pw").value;
+if(!em||!pw){er.textContent="Escribe tu correo y contraseña.";return}
+try{
+if(mode==="in"){await signInWithEmailAndPassword(auth,em,pw);return}
+const nom=$("nom").value.trim(),rol=$("rol").value;
+if(nom.length<3){er.textContent="Escribe tu nombre completo.";return}
+if(rol==="alumno"&&/\d{6,}/.test(nom)){er.textContent="Parece una matrícula. Escribe solo tu nombre.";return}
+const d={nombre:nom,rol:rol};
+if(rol==="tutor"){
+const en=$("en").value.trim();
+if(!/^https:\/\//.test(en)){er.textContent="Pega tu enlace de reunión completo (empieza con https://).";return}
+d.correo=($("cc").value.trim()||em);d.plataforma=$("pl").value;d.enlace=en}
+busy=true;
+const c=await createUserWithEmailAndPassword(auth,em,pw);
+await setDoc(doc(db,"users",c.user.uid),d);
+busy=false;start(c.user)
+}catch(e){busy=false;er.textContent=msg(e)}};
+
+async function init(){
+if(bad)return;
+try{
+await loadFB();
+app=initializeApp(firebaseConfig);auth=getAuth(app);db=getFirestore(app);
+try{emailjs.init({publicKey:EMAILJS.publicKey})}catch(e){}
+onAuthStateChanged(auth,u=>{if(busy)return;if(u)start(u);else{uid=null;$("vApp").hidden=true;$("vAuth").hidden=false}});
+}catch(e){$("err").textContent="No se pudo cargar Firebase ("+(e.message||e)+"). Abre la página ya publicada en internet y revisa tu conexión."}}
+init();
+$("out").onclick=()=>signOut(auth);
+
+async function start(u){
+uid=u.uid;const s=await getDoc(doc(db,"users",uid));
+if(!s.exists()){$("err").textContent="Tu cuenta no tiene perfil. Crea una cuenta nueva.";signOut(auth);return}
+P=s.data();$("vAuth").hidden=true;$("vApp").hidden=false;
+$("hola").textContent="Hola, "+P.nombre.split(" ")[0];
+$("vAl").hidden=P.rol!=="alumno";$("vTu").hidden=P.rol!=="tutor";
+if(P.rol==="alumno")loadAl();else loadTu()}
+
+async function loadAl(){
+const r=await getDocs(query(collection(db,"users"),where("rol","==","tutor")));
+tutores=r.docs.map(d=>({id:d.id,...d.data()}));
+$("tl").innerHTML=tutores.map(t=>'<option value="'+esc(t.nombre)+'">').join("")}
+
+$("bt").onclick=async()=>{
+const v=norm($("tb").value);$("e3").textContent="";
+let m=tutores.filter(t=>norm(t.nombre)===v);
+if(!m.length)m=tutores.filter(t=>v&&norm(t.nombre).includes(v));
+if(m.length!==1){$("e3").textContent=m.length?"Hay varios tutores parecidos. Escribe el nombre completo.":"No encontramos a ese tutor. Revisa el nombre.";return}
+S={tutor:m[0]};$("tn").textContent="Tutor: "+m[0].nombre;
+const r=await getDocs(query(collection(db,"sesiones"),where("alumnoId","==",uid),where("tutorId","==",m[0].id)));
+S.hechas=r.docs.map(d=>d.data().tut);
+$("cb").hidden=false;$("panel").hidden=true;$("done").hidden=true;blocks()};
+
+function blocks(){
+const hoy=new Date();hoy.setHours(0,0,0,0);let h="";
+TUT.forEach((t,i)=>{const n=i+1,f=new Date(t[0]+"T00:00:00"),dif=Math.round((f-hoy)/864e5);
+let sub=fmt(t[0]),dis=true;
+if(S.hechas.includes(n))sub="Programada";
+else if(dif<0)sub="Ya pasó";
+else if(dif>14){const a=new Date(f);a.setDate(a.getDate()-14);sub="Se abre el "+fmt(a.toISOString().slice(0,10))}
+else dis=false;
+h+='<button class="blk" data-n="'+n+'" '+(dis?"disabled":"")+'><b>Tutoría '+n+(dis?" 🔒":"")+'</b><span>'+sub+'</span></button>'});
+$("blocks").innerHTML=h;
+document.querySelectorAll(".blk:not(:disabled)").forEach(b=>b.onclick=()=>panel(+b.dataset.n))}
+
+const chips=(g,v)=>'<div class="chips">'+v.map(x=>'<button class="chip" data-g="'+g+'" data-v="'+x+'" aria-pressed="false">'+x+'</button>').join("")+'</div>';
+function panel(n){
+S.n=n;S.iso=TUT[n-1][0];S.ev="";S.hora="";const t=S.tutor;
+$("done").hidden=true;$("panel").hidden=false;
+$("panel").innerHTML='<h2>Tutoría '+n+': '+fmt(S.iso)+'</h2>'+
+'<label>1. Minievaluación: ¿estás conforme con tu tutor?</label>'+chips("ev",["Sí, conforme","Más o menos","No, quiero comentarlo"])+
+'<textarea id="com" placeholder="Comentario (opcional)" style="margin-top:10px"></textarea>'+
+'<label>2. Horario</label>'+chips("hora",["10:00","12:00","16:00"])+
+'<label>3. Sesión virtual</label><p class="note">'+esc(t.plataforma)+' con el enlace de tu tutor.</p>'+
+'<div class="err" id="e4" role="alert"></div><button class="main" id="prog" disabled>Programar tutoría</button>';
+$("prog").onclick=programar;$("panel").scrollIntoView({behavior:"smooth",block:"nearest"})}
+$("panel").onclick=e=>{const c=e.target.closest(".chip");if(!c)return;
+S[c.dataset.g]=c.dataset.v;
+$("panel").querySelectorAll('.chip[data-g="'+c.dataset.g+'"]').forEach(x=>x.setAttribute("aria-pressed",x===c));
+$("prog").disabled=!(S.ev&&S.hora)};
+
+async function programar(){
+const t=S.tutor;$("prog").disabled=true;$("prog").textContent="Programando...";
+const ses={alumnoId:uid,alumno:P.nombre,tutorId:t.id,tutor:t.nombre,tut:S.n,fecha:S.iso,hora:S.hora,plataforma:t.plataforma,enlace:t.enlace,eval:S.ev,comentario:$("com").value.trim(),creada:serverTimestamp()};
+try{await addDoc(collection(db,"sesiones"),ses)}catch(e){$("e4").textContent="No se pudo guardar. Intenta de nuevo.";$("prog").disabled=false;$("prog").textContent="Programar tutoría";return}
+let ok=false;
+try{await emailjs.send(EMAILJS.serviceId,EMAILJS.templateId,{to_email:t.correo,to_name:t.nombre,alumno:P.nombre,tutoria:S.n,fecha:fmt(S.iso),hora:S.hora,plataforma:t.plataforma,enlace:t.enlace,evaluacion:S.ev});ok=true}catch(e){}
+S.hechas.push(S.n);blocks();
+const d=S.iso.replace(/-/g,""),hh=S.hora.replace(":",""),fin=String(+S.hora.slice(0,2)+1).padStart(2,"0")+"00";
+const cal="https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent("Tutoría "+S.n+" con "+t.nombre)+"&dates="+d+"T"+hh+"00/"+d+"T"+fin+"00&details="+encodeURIComponent("Enlace: "+t.enlace);
+$("panel").hidden=true;$("done").hidden=false;
+$("done").innerHTML='<h2>Tutoría programada</h2><p><b>Tutoría '+S.n+'</b>: '+fmt(S.iso)+', '+S.hora+' h, por '+esc(t.plataforma)+'.</p><p><a href="'+esc(t.enlace)+'" target="_blank" rel="noopener">Abrir enlace de la sesión</a></p><p><a href="'+cal+'" target="_blank" rel="noopener">Agregar a Google Calendar</a></p>'+
+(ok?'<div class="mail"><b>Correo enviado a '+esc(t.nombre)+'</b>Recibió la fecha, la hora y tu evaluación.</div>':'<div class="mail"><b>La tutoría quedó guardada, pero el correo no salió.</b>Tu tutor la verá en su cuenta. Revisa la configuración de EmailJS.</div>');
+$("done").scrollIntoView({behavior:"smooth",block:"nearest"})}
+
+async function loadTu(){
+$("tdat").innerHTML='<p>'+esc(P.nombre)+'</p><p class="note">Recibes los avisos en '+esc(P.correo)+'<br>Sesiones por '+esc(P.plataforma)+': '+esc(P.enlace)+'</p>';
+const r=await getDocs(query(collection(db,"sesiones"),where("tutorId","==",uid)));
+const L=r.docs.map(d=>d.data()).sort((a,b)=>a.fecha<b.fecha?-1:1);
+$("lista").innerHTML=L.length?L.map(x=>'<div class="mail"><b>'+esc(x.alumno)+': Tutoría '+x.tut+'</b>'+fmt(x.fecha)+', '+esc(x.hora)+' h<br>Conformidad con el tutor: '+esc(x.eval)+(x.comentario?'<br>Comentario: '+esc(x.comentario):'')+'</div>').join(""):'<p class="note">Aún no hay tutorías programadas.</p>'}
+</script>
+</body>
+</html>
